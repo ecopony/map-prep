@@ -1,3 +1,4 @@
 .env
 *.gpkg
 .ipynb_checkpoints
+.ridge-src
