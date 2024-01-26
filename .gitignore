@@ -2,3 +2,4 @@
 *.gpkg
 .ipynb_checkpoints
 .ridge-src
+__pycache__
