@@ -3,3 +3,4 @@
 .ipynb_checkpoints
 .ridge-src
 __pycache__
+.conda
