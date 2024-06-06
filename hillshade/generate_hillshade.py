@@ -45,17 +45,12 @@ def combine_hillshades(dem_path: str, azimuths: List[float], altitudes: List[flo
 
 def generate_slope_array(dem_path: str) -> Tuple[np.ndarray, Optional[float]]:
     """Generate a slope array from a DEM."""
-    dem_ds = gdal.Open(dem_path, gdal.GA_ReadOnly)
-    if dem_ds is None:
-        raise FileNotFoundError("Failed to open DEM file: " + dem_path)
-
-    slope_ds = gdal.DEMProcessing('', dem_ds, 'slope', format='MEM', scale=1)
+    dem_data = gdal.Open(dem_path, gdal.GA_ReadOnly)
+    slope_ds = gdal.DEMProcessing('', dem_data, 'slope', format='MEM', scale=1)
     slope_band = slope_ds.GetRasterBand(1)
     slope_array = slope_band.ReadAsArray()
     no_data_value = slope_band.GetNoDataValue()
     
-    # return slope_array, no_data_value
-
     if no_data_value is not None:
         mask = slope_array == no_data_value
         slope_array = np.ma.masked_where(mask, slope_array)
@@ -66,7 +61,6 @@ def generate_slope_array(dem_path: str) -> Tuple[np.ndarray, Optional[float]]:
     norm_slope_array = np.ma.filled(norm_slope_array, 0)
     
     return norm_slope_array
-
 
 
 def adjust_brightness(img: Image.Image, brightness_factor: float) -> Image.Image:
