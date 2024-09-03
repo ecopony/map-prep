@@ -4,3 +4,4 @@
 .ridge-src
 __pycache__
 .conda
+cache
