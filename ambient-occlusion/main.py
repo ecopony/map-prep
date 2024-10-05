@@ -44,20 +44,23 @@ def generate_slope(dem_path: str, output_name: str, zFactor: float = 1.0) -> np.
     gdal.DEMProcessing(slope_path, dem_path, 'slope', options=options)
     return gdal.Open(slope_path).ReadAsArray()
 
+
 input_path = 'input/combined_clip.tif'
+area_name = 'carson'
+output_directory = f'output/{area_name}'
 
-blur_dem_raster(input_path, 'output/blur_10.tif', 10)
-blur_dem_raster(input_path, 'output/blur_20.tif', 20)
-blur_dem_raster(input_path, 'output/blur_50.tif', 50)
+blur_dem_raster(input_path, f'{output_directory}/blur_10.tif', 10)
+blur_dem_raster(input_path, f'{output_directory}/blur_20.tif', 20)
+blur_dem_raster(input_path, f'{output_directory}/blur_50.tif', 50)
 
-original_hillshade = generate_hillshade(input_path, 'original')
-hillshade_blur_10 = generate_hillshade('output/blur_10.tif', 'blur_10')
-hillshade_blur_20 = generate_hillshade('output/blur_20.tif', 'blur_20')
-hillshade_blur_50 = generate_hillshade('output/blur_50.tif', 'blur_50')
+original_hillshade = generate_hillshade(input_path, f'{area_name}/original')
+hillshade_blur_10 = generate_hillshade(f'{output_directory}/blur_10.tif', f'{area_name}/blur_10')
+hillshade_blur_20 = generate_hillshade(f'{output_directory}/blur_20.tif', f'{area_name}/blur_20')
+hillshade_blur_50 = generate_hillshade(f'{output_directory}/blur_50.tif', f'{area_name}/blur_50')
 
-original_slope = generate_slope(input_path, 'original')
-slope_blur_10 = generate_slope('output/blur_10.tif', 'blur_10')
-slope_blur_20 = generate_slope('output/blur_20.tif', 'blur_20')
-slope_blur_50 = generate_slope('output/blur_50.tif', 'blur_50')
+original_slope = generate_slope(input_path, f'{area_name}/original')
+slope_blur_10 = generate_slope(f'{output_directory}/blur_10.tif', f'{area_name}/blur_10')
+slope_blur_20 = generate_slope(f'{output_directory}/blur_20.tif', f'{area_name}/blur_20')
+slope_blur_50 = generate_slope(f'{output_directory}/blur_50.tif', f'{area_name}/blur_50')
 
-hillshade_from_slope = generate_hillshade('output/original_slope.tif', 'slope')
+hillshade_from_slope = generate_hillshade(f'{output_directory}/original_slope.tif', f'{area_name}/slope')
