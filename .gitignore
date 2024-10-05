@@ -5,3 +5,9 @@
 __pycache__
 .conda
 cache
+
+# Ignore all files in the output/ directory and its subdirectories
+output/**
+
+# Allow .png files to be tracked
+!output/**/*.png
