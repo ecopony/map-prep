@@ -4,7 +4,7 @@ import numpy as np
 from rasterio.mask import mask
 import pandas as pd
 
-states = ne.us_states_50m_contiguous()
+states = ne.us_states(contiguous=True)
 fruit_values = [212, 213, 68, 66, 221]
 
 raster_path = '2023_30m_cdls.tif'
