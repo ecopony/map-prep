@@ -1,10 +1,4 @@
-# %pip install geopandas python-dotenv rasterio osgeo
-
-import os
-import sys
-sys.path.append('../utils/')
-import natural_earth_utils as ne
-import hillshade_utils as ru
+from mapprep import natural_earth as ne
 import dotenv
 import geopandas as gpd
 from riverrem.REMMaker import REMMaker

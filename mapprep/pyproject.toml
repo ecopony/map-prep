@@ -1,0 +1,20 @@
+[project]
+name = "mapprep"
+version = "0.1.0"
+description = "Shared geospatial helpers for map-prep projects"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "gdal",
+    "geopandas",
+    "numpy",
+    "python-dotenv",
+    "rasterio",
+]
+
+# GDAL ships no Windows wheels on PyPI; use cgohlke's geospatial-wheels build (cp312 only).
+[tool.uv.sources]
+gdal = { url = "https://github.com/cgohlke/geospatial-wheels/releases/download/v2026.2.26/gdal-3.12.2-cp312-cp312-win_amd64.whl" }
+
+[build-system]
+requires = ["uv_build>=0.10,<0.11"]
+build-backend = "uv_build"

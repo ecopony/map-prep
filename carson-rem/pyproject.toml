@@ -1,0 +1,21 @@
+[project]
+name = "carson-rem"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "geopandas",
+    "mapprep",
+    "python-dotenv",
+    "riverrem",
+    # riverrem declares no pip dependencies (conda-oriented); these are its runtime imports
+    "cmocean",
+    "osmnx",
+    "requests",
+    "scipy",
+    "seaborn",
+]
+
+[tool.uv.sources]
+mapprep = { workspace = true }
+# PyPI's riverrem is a dead 0.0.1 stub; the real package lives on GitHub.
+riverrem = { git = "https://github.com/OpenTopography/RiverREM" }
