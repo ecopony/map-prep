@@ -1,7 +1,4 @@
-import os
-import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../utils')))
-import natural_earth_utils as ne
+from mapprep import natural_earth as ne
 import rasterio
 import numpy as np
 from rasterio.mask import mask

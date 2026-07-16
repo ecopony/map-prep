@@ -1,0 +1,12 @@
+[project]
+name = "forest-loss"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "geopandas",
+    "mapprep",
+    "python-dotenv",
+]
+
+[tool.uv.sources]
+mapprep = { workspace = true }

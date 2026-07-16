@@ -1,0 +1,11 @@
+[tool.uv.workspace]
+members = [
+    "mapprep",
+    "carson-rem",
+    "cropland",
+    "forest-loss",
+]
+
+# The pinned GDAL wheel is Windows/CPython 3.12 only, so lock for that platform.
+[tool.uv]
+environments = ["sys_platform == 'win32'"]

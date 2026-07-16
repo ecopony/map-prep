@@ -1,4 +1,5 @@
 .env
+.venv
 *.gpkg
 .ipynb_checkpoints
 .ridge-src
