@@ -16,6 +16,10 @@ The repo is a [uv](https://docs.astral.sh/uv/) workspace (Python 3.12, single `.
 - **riverrem**: PyPI's `riverrem` is a dead 0.0.1 stub. carson-rem installs it from the OpenTopography GitHub repo and declares its undeclared runtime deps (osmnx, scipy, seaborn, cmocean, requests) explicitly.
 - Unconverted projects still assume an ad-hoc environment (historically conda); convert them by adding a `pyproject.toml` and registering the directory in the root workspace `members` list.
 
+## Layer Documentation
+
+Every file written to a project's `output/` directory must be documented in that project's `output/LAYERS.md` — use the `make-layer` skill, which covers the entry format, the facts-extraction script, and update semantics. `CATALOG.md` at the repo root indexes documented projects; it is the entry point for Claude sessions in the user's map-planning directory, which see only files and rely on this documentation for the reasoning and processing chain behind each layer.
+
 ## Key Dependencies
 
 The codebase primarily uses:

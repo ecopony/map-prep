@@ -1,0 +1,14 @@
+# ridge-maps — layer documentation
+
+**Map**: None — standalone ridgeline art print, not an ArcGIS Pro layer (no matching ArcGIS project known).
+**Script**: `main.py` (last changed in commit `b9518a8`, 2025-09-02; originally added 2024-01-19 as commit `1ce8793`)
+**Overview**: A single-output art project: a "Joy Division"-style ridgeline plot of Crater Lake, Oregon, drawn with the [ridge_map](https://github.com/ColCarroll/ridge_map) library (elevation profiles rendered as stacked matplotlib lines). The bbox `(-122.199576, 42.891522, -121.992865, 42.993366)` covers the Crater Lake caldera. The project predates the uv workspace and has no `pyproject.toml`; the `%pip install ridge_map` comment shows `main.py` began life as a notebook (converted to a plain script in `b9518a8`). `.ridge-src` in the project directory is a vendored copy of the ridge_map library source, presumably kept for reference — the reason is not recorded (unknown).
+
+> Entries were reconstructed from `main.py`, `.ridge-src`, and git history on 2026-07-18, long after the layer was created. Rationale marked *(reconstructed)* is inferred from code and comments, not a firsthand record of the decisions.
+
+## crater-lake-green.png
+- **Role**: Final art output — 50 stacked west–east elevation-profile lines of the Crater Lake caldera in green, labeled "crater lake". A finished print image, not a georeferenced layer (no CRS, no world file).
+- **Source**: SRTM elevation data, fetched on the fly by `ridge_map`'s `get_elevation_data` via the `srtm` Python package (srtm.py downloads and caches SRTM tiles); no local input data. Vintage of the tiles at fetch time not recorded.
+- **Processing**: `RidgeMap(bbox).get_elevation_data(num_lines=50)` samples 50 elevation transects across the bbox; `rm.preprocess(water_ntile=12, vertical_ratio=50)` flattens the lowest 12th percentile of elevations to a water level (the lake surface) and applies 50x vertical exaggeration; `rm.plot_map(..., linewidth=3, line_color='green', label='crater\n   lake', label_x=0.75, label_y=0.82)` renders the lines; saved with `plt.savefig(..., bbox_inches='tight', pad_inches=0, dpi=300)`. All logic lives in `main.py` and the ridge_map library.
+- **Rationale** *(reconstructed)*: `water_ntile=12` makes the lake surface read as flat water inside the caldera rim, and `vertical_ratio=50` exaggerates the rim relief so it reads at print scale — both are the library's standard knobs, and the exact values were presumably tuned by eye (not recorded). Why green, and why this label placement: unknown (aesthetic choices with no recorded reasoning). The filename suggests a color variant; no other variants are present in `output/`.
+- **Facts** *(extracted 2026-07-18, via PIL)*: 4650x2276 px, RGBA, 300 dpi, 3.2 MB, no georeferencing (plain PNG, no CRS/extent metadata)
