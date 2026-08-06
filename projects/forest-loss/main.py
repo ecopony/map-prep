@@ -4,7 +4,7 @@ from mapprep import hillshade as ru
 import dotenv
 import geopandas as gpd
 
-dotenv.load_dotenv()
+dotenv.load_dotenv(dotenv.find_dotenv())
 
 geopackage_name = 'output/forest-loss.gpkg'
 

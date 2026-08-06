@@ -1,7 +1,7 @@
 """Print markdown Facts lines for every raster/geopackage in an output directory.
 
 Usage (from a project directory):
-    uv run python ../.claude/skills/make-layer/scripts/extract_facts.py output
+    uv run python ../../.claude/skills/make-layer/scripts/extract_facts.py output
 
 Paste the emitted lines into the Facts field of each entry in output/LAYERS.md.
 """

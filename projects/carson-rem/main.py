@@ -3,7 +3,7 @@ import dotenv
 import geopandas as gpd
 from riverrem.REMMaker import REMMaker
 
-dotenv.load_dotenv("../.env")
+dotenv.load_dotenv(dotenv.find_dotenv())
 
 geopackage_name = 'output/carson-rem.gpkg'
 

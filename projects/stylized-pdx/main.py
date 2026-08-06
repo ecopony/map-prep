@@ -24,7 +24,7 @@ def simplify_geometry(geometry, tolerance):
                 simplified_polygons.append(simplified_polygon)
         return MultiPolygon(simplified_polygons) if simplified_polygons else None
 
-dotenv.load_dotenv("./../.env")
+dotenv.load_dotenv(dotenv.find_dotenv())
 
 geopackage_name = 'output/stylized-pdx.gpkg'
 
