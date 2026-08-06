@@ -4,6 +4,7 @@ members = [
     "carson-rem",
     "cropland",
     "forest-loss",
+    "rainfall",
 ]
 
 # The pinned GDAL wheel is Windows/CPython 3.12 only, so lock for that platform.
