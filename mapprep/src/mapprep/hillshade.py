@@ -25,6 +25,23 @@ def from_dem(dem_path, dst_path, z_factor=1.0, multi_directional=False, azimuth=
     return dst_path
 
 
+def array_from_dem(dem_path, z_factor=1.0, azimuth=315, altitude=45):
+    """Single-azimuth hillshade as an in-memory array (nothing written to disk)."""
+    ds = gdal.DEMProcessing('', dem_path, 'hillshade', format='MEM', computeEdges=True,
+                            zFactor=z_factor, azimuth=azimuth, altitude=altitude)
+    return ds.ReadAsArray()
+
+
+def combine(dem_path, azimuths, altitudes, weights=None, z_factor=1.0):
+    """Weighted blend of hillshades from multiple azimuth/altitude pairs, as an array.
+
+    Unlike from_dem(multi_directional=True) (GDAL's fixed formula), this gives control
+    over the directions and their weights."""
+    arrays = [array_from_dem(dem_path, z_factor=z_factor, azimuth=azimuth, altitude=altitude)
+              for azimuth, altitude in zip(azimuths, altitudes)]
+    return np.clip(np.average(arrays, axis=0, weights=weights), 0, 255)
+
+
 def generate_hillshade_raster(directory_path):
     hgt_files = [os.path.join(directory_path, f) for f in os.listdir(directory_path) if f.endswith('.hgt')]
 

@@ -2,6 +2,7 @@ import math
 import os
 
 import dotenv
+import numpy as np
 import requests
 from osgeo import gdal
 
@@ -82,6 +83,21 @@ def fetch(bounds, dst_path, demtype='COP90', resolution_arcsec=None, cache_dir='
         warp_kwargs = {'xRes': degrees, 'yRes': degrees, 'resampleAlg': 'average'}
     gdal.Warp(dst_path, slab_paths, creationOptions=GTIFF_OPTIONS, **warp_kwargs)
     return dst_path
+
+
+def slope(dem_path, dst_path, z_factor=1.0):
+    """Slope in degrees to a GeoTIFF."""
+    gdal.DEMProcessing(dst_path, dem_path, 'slope', computeEdges=True, zFactor=z_factor,
+                       creationOptions=GTIFF_OPTIONS)
+    return dst_path
+
+
+def slope_array(dem_path):
+    """Slope in degrees as an in-memory array, with nodata masked."""
+    band = gdal.DEMProcessing('', dem_path, 'slope', format='MEM').GetRasterBand(1)
+    data = band.ReadAsArray()
+    nodata = band.GetNoDataValue()
+    return np.ma.masked_equal(data, nodata) if nodata is not None else data
 
 
 def fetch_usgs(bounds, dst_path, dataset='USGS1m', cache_dir='cache/opentopography'):

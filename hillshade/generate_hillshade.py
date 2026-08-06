@@ -1,9 +1,10 @@
-from typing import List, Optional, Tuple
 from osgeo import gdal
 from PIL import Image, ImageChops, ImageEnhance
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
+from mapprep import dem
+from mapprep import hillshade
 
 
 def extract_colors_from_image(image_path: str) -> np.ndarray:
@@ -20,47 +21,6 @@ def apply_colormap(array: np.ndarray, cmap: LinearSegmentedColormap) -> np.ndarr
     normed_data = (array - array.min()) / (array.max() - array.min())
     colored = colormap(normed_data)
     return (colored[:, :, :3] * 255).astype('uint8')
-
-
-def generate_hillshade(dem_path: str, azimuth: float, altitude: float, zFactor: float = 1.0) -> np.ndarray:
-    """Generate a hillshade for a specific azimuth and altitude."""
-    options = gdal.DEMProcessingOptions(format='GTiff', computeEdges=True, zFactor=zFactor, azimuth=azimuth, altitude=altitude)
-    hillshade_path = f'output/temp_hillshade_{azimuth}_{altitude}.tif'
-    gdal.DEMProcessing(hillshade_path, dem_path, 'hillshade', options=options)
-    return gdal.Open(hillshade_path).ReadAsArray()
-
-
-def combine_hillshades(dem_path: str, azimuths: List[float], altitudes: List[float], weights: Optional[List[float]] = None) -> np.ndarray:
-    """Combine hillshades from multiple directions."""
-    hillshades = [generate_hillshade(dem_path, az, alt) for az, alt in zip(azimuths, altitudes)]
-
-    if weights is None:
-        weights = np.ones(len(azimuths))
-
-    weights = np.array(weights) / np.sum(weights)
-    combined_hillshade = np.average(hillshades, axis=0, weights=weights)
-    combined_hillshade = np.clip(combined_hillshade, 0, 255)
-    return combined_hillshade
-
-
-def generate_slope_array(dem_path: str) -> Tuple[np.ndarray, Optional[float]]:
-    """Generate a slope array from a DEM."""
-    dem_data = gdal.Open(dem_path, gdal.GA_ReadOnly)
-    slope_ds = gdal.DEMProcessing('', dem_data, 'slope', format='MEM', scale=1)
-    slope_band = slope_ds.GetRasterBand(1)
-    slope_array = slope_band.ReadAsArray()
-    no_data_value = slope_band.GetNoDataValue()
-    
-    if no_data_value is not None:
-        mask = slope_array == no_data_value
-        slope_array = np.ma.masked_where(mask, slope_array)
-
-    min_val = np.min(slope_array)
-    max_val = np.max(slope_array)
-    norm_slope_array = (slope_array - min_val) / (max_val - min_val)
-    norm_slope_array = np.ma.filled(norm_slope_array, 0)
-    
-    return norm_slope_array
 
 
 def adjust_brightness(img: Image.Image, brightness_factor: float) -> Image.Image:
@@ -109,7 +69,7 @@ warm_image.save('output/2-warming.png')
 warming_blended = ImageChops.soft_light(terrain_image, warm_image)
 warming_blended.save('output/3-warming_blended.png')
 
-traditional_hillshade = combine_hillshades(dem_path, [315], [45])
+traditional_hillshade = hillshade.combine(dem_path, [315], [45])
 traditional_hillshade_image = rgb_image_from_array(traditional_hillshade)
 traditional_hillshade_image.save('output/4-traditional_hillshade.png')
 traditional_hillshade_blended = ImageChops.overlay(warming_blended, traditional_hillshade_image)
@@ -117,13 +77,13 @@ traditional_hillshade_blended.save('output/5-hillshade_blended.png')
 
 azimuths = [45, 135, 225, 315]
 altitudes = [45, 45, 45, 45]
-multidirectional_hillshade = combine_hillshades(dem_path, azimuths, altitudes)
+multidirectional_hillshade = hillshade.combine(dem_path, azimuths, altitudes)
 multidirectional_hillshade_image = rgb_image_from_array(multidirectional_hillshade)
 multidirectional_hillshade_image.save('output/6-multidirectional_hillshade.png')
 multidirectional_hillshade_blended = ImageChops.multiply(traditional_hillshade_blended, multidirectional_hillshade_image)
 multidirectional_hillshade_blended.save('output/7-blended-multidirectional_hillshade.png')
 
-low_light_hillshade = combine_hillshades(dem_path, [315], [25])
+low_light_hillshade = hillshade.combine(dem_path, [315], [25])
 low_light_hillshade_image = rgb_image_from_array(low_light_hillshade)
 low_light_hillshade_image.save('output/8-low_light_hillshade.png')
 low_light_hillshade_blended = ImageChops.soft_light(multidirectional_hillshade_blended, low_light_hillshade_image)
@@ -156,7 +116,9 @@ combined_terrain_and_mist = Image.alpha_composite(terrain_image, mist_image).con
 combined_terrain_and_mist.save('output/13-combined_terrain_and_mist.png')
 
 cividis_cmap = plt.get_cmap('cividis')
-slope_dem = cividis_cmap(generate_slope_array(dem_path))
+slope_array = dem.slope_array(dem_path)
+normalized_slope = np.ma.filled((slope_array - slope_array.min()) / (slope_array.max() - slope_array.min()), 0)
+slope_dem = cividis_cmap(normalized_slope)
 slope_image = rgb_image_from_array(slope_dem)
 slope_image.save('output/14-slope.png', 'png')
 
