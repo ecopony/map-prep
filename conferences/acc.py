@@ -1,16 +1,14 @@
-import os
-import dotenv
 import pandas as pd
 import geopandas as gpd
 from pyproj import CRS
 import plotly.graph_objects as go
-
-dotenv.load_dotenv("../.env")
+from mapprep import natural_earth as ne
 
 geopackage_name = 'output/acc.gpkg'
 
-states_provinces_50m = gpd.read_file(os.path.join(os.environ['NATURAL_EARTH_DIR'], 'StatesProvinces/ne_50m_admin_1_states_provinces_lakes/ne_50m_admin_1_states_provinces_lakes.shp'))
-us_states_50m = states_provinces_50m[states_provinces_50m['iso_a2'] == 'US']
+# All US admin-1 units (no contiguous filter): the Plotly figure uses an
+# 'albers usa' projection, which handles Alaska and Hawaii
+us_states_50m = ne.us_states()
 us_states_50m.to_file(geopackage_name, layer='us_states_50m', driver='GPKG')
 
 acc_schools_data = {

@@ -1,9 +1,12 @@
 [tool.uv.workspace]
 members = [
     "mapprep",
+    "ambient-occlusion",
     "carson-rem",
+    "conferences",
     "cropland",
     "forest-loss",
+    "hillshade",
     "property-rainwater",
     "rainfall",
 ]

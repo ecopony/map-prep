@@ -25,6 +25,18 @@ def build_overviews(path, levels=(2, 4, 8, 16, 32), resampling='AVERAGE'):
     ds.BuildOverviews(resampling, list(levels))
     return path
 
+def blur(src_path, dst_path, pixel_window : int):
+    """Mean-filter blur of a single-band raster; reflect-padded so edges don't darken."""
+    with rasterio.open(src_path) as src:
+        data = src.read(1)
+        meta = src.meta.copy()
+    pad = pixel_window // 2
+    padded = np.pad(data, pad, mode='reflect')
+    blurred = ndimage.uniform_filter(padded, size=pixel_window, mode='constant', cval=0)
+    with rasterio.open(dst_path, 'w', **meta) as dst:
+        dst.write(blurred[pad:-pad, pad:-pad], 1)
+    return dst_path
+
 def scale_values(src_path, dst_path, factor : float):
     with rasterio.open(src_path) as src:
         data = src.read(1)
