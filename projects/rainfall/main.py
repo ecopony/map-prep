@@ -8,7 +8,7 @@ from mapprep import prism
 from mapprep import raster
 import dotenv
 
-dotenv.load_dotenv()
+dotenv.load_dotenv(dotenv.find_dotenv())
 
 geopackage_name = 'output/rainfall.gpkg'
 min_population = 500_000

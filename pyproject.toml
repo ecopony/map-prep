@@ -1,14 +1,14 @@
 [tool.uv.workspace]
 members = [
-    "mapprep",
-    "ambient-occlusion",
-    "carson-rem",
-    "conferences",
-    "cropland",
-    "forest-loss",
-    "hillshade",
-    "property-rainwater",
-    "rainfall",
+    "packages/mapprep",
+    "projects/ambient-occlusion",
+    "projects/carson-rem",
+    "projects/conferences",
+    "projects/cropland",
+    "projects/forest-loss",
+    "projects/hillshade",
+    "projects/property-rainwater",
+    "projects/rainfall",
 ]
 
 # The pinned GDAL wheel is Windows/CPython 3.12 only, so lock for that platform.

@@ -13,7 +13,7 @@ Output layers here are consumed by ArcGIS Pro *and* by Claude sessions running i
 2. Extract technical facts from the files just written (run from the project directory):
 
    ```
-   uv run python ../.claude/skills/make-layer/scripts/extract_facts.py output
+   uv run python ../../.claude/skills/make-layer/scripts/extract_facts.py output
    ```
 
 3. Create or update `output/LAYERS.md` using the template below. One entry per output file; a geopackage gets one sub-entry per internal layer.
