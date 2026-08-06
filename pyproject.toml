@@ -4,6 +4,7 @@ members = [
     "carson-rem",
     "cropland",
     "forest-loss",
+    "property-rainwater",
     "rainfall",
 ]
 
