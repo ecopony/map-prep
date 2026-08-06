@@ -6,6 +6,25 @@ import os
 import zipfile
 import numpy as np
 
+gdal.UseExceptions()
+
+def from_dem(dem_path, dst_path, z_factor=1.0, multi_directional=False, azimuth=315, altitude=45):
+    """Hillshade a DEM into an 8-bit GeoTIFF. Handles geographic DEMs (degrees + meters)
+    via GDAL's scale option. multi_directional ignores azimuth (GDAL forbids combining them)."""
+    ds = gdal.Open(dem_path)
+    srs = ds.GetSpatialRef()
+    scale = 111120 if srs is not None and srs.IsGeographic() else 1
+
+    options = {'scale': scale, 'zFactor': z_factor, 'altitude': altitude, 'computeEdges': True,
+               'creationOptions': ['COMPRESS=DEFLATE', 'TILED=YES']}
+    if multi_directional:
+        options['multiDirectional'] = True
+    else:
+        options['azimuth'] = azimuth
+    gdal.DEMProcessing(dst_path, ds, 'hillshade', **options)
+    return dst_path
+
+
 def generate_hillshade_raster(directory_path):
     hgt_files = [os.path.join(directory_path, f) for f in os.listdir(directory_path) if f.endswith('.hgt')]
 

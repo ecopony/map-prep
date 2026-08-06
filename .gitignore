@@ -7,8 +7,11 @@ __pycache__
 .conda
 cache
 
-# Ignore all files in the output/ directory and its subdirectories
-output/**
+# Ignore all files in any project's output/ directory (the pattern must re-include
+# subdirectories, or git never descends to see the negated files below)
+**/output/**
+!**/output/**/
 
-# Allow .png files to be tracked
-!output/**/*.png
+# Allow .png files and layer documentation to be tracked
+!**/output/**/*.png
+!**/output/LAYERS.md

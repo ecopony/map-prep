@@ -6,9 +6,13 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "gdal",
     "geopandas",
+    "matplotlib>=3.11.0",
     "numpy",
     "python-dotenv",
     "rasterio",
+    "requests",
+    "scipy",
+    "shapely>=2.1",
 ]
 
 # GDAL ships no Windows wheels on PyPI; use cgohlke's geospatial-wheels build (cp312 only).

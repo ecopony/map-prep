@@ -14,6 +14,7 @@ members = [
     "cropland",
     "forest-loss",
     "mapprep",
+    "rainfall",
 ]
 
 [[package]]
@@ -257,18 +258,26 @@ source = { editable = "mapprep" }
 dependencies = [
     { name = "gdal", marker = "sys_platform == 'win32'" },
     { name = "geopandas", marker = "sys_platform == 'win32'" },
+    { name = "matplotlib", marker = "sys_platform == 'win32'" },
     { name = "numpy", marker = "sys_platform == 'win32'" },
     { name = "python-dotenv", marker = "sys_platform == 'win32'" },
     { name = "rasterio", marker = "sys_platform == 'win32'" },
+    { name = "requests", marker = "sys_platform == 'win32'" },
+    { name = "scipy", marker = "sys_platform == 'win32'" },
+    { name = "shapely", marker = "sys_platform == 'win32'" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "gdal", url = "https://github.com/cgohlke/geospatial-wheels/releases/download/v2026.2.26/gdal-3.12.2-cp312-cp312-win_amd64.whl" },
     { name = "geopandas" },
+    { name = "matplotlib", specifier = ">=3.11.0" },
     { name = "numpy" },
     { name = "python-dotenv" },
     { name = "rasterio" },
+    { name = "requests" },
+    { name = "scipy" },
+    { name = "shapely", specifier = ">=2.1" },
 ]
 
 [[package]]
@@ -420,6 +429,21 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/82/ed/0301aeeac3e5353ef3d94b6ec08bbcabd04a72018415dcb29e588514bba8/python_dotenv-1.2.2.tar.gz", hash = "sha256:2c371a91fbd7ba082c2c1dc1f8bf89ca22564a087c2c287cd9b662adde799cf3", size = 50135, upload-time = "2026-03-01T16:00:26.196Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0b/d7/1959b9648791274998a9c3526f6d0ec8fd2233e4d4acce81bbae76b44b2a/python_dotenv-1.2.2-py3-none-any.whl", hash = "sha256:1d8214789a24de455a8b8bd8ae6fe3c6b69a5e3d64aa8a8e5d68e694bbcb285a", size = 22101, upload-time = "2026-03-01T16:00:25.09Z" },
+]
+
+[[package]]
+name = "rainfall"
+version = "0.1.0"
+source = { virtual = "rainfall" }
+dependencies = [
+    { name = "mapprep", marker = "sys_platform == 'win32'" },
+    { name = "python-dotenv", marker = "sys_platform == 'win32'" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "mapprep", editable = "mapprep" },
+    { name = "python-dotenv" },
 ]
 
 [[package]]
