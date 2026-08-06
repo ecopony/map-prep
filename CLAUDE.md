@@ -16,6 +16,28 @@ The repo is a [uv](https://docs.astral.sh/uv/) workspace (Python 3.12, single `.
 - **riverrem**: PyPI's `riverrem` is a dead 0.0.1 stub. carson-rem installs it from the OpenTopography GitHub repo and declares its undeclared runtime deps (osmnx, scipy, seaborn, cmocean, requests) explicitly.
 - Unconverted projects still assume an ad-hoc environment (historically conda); convert them by adding a `pyproject.toml` and registering the directory in the root workspace `members` list.
 
+## Environment Variables
+
+Source data lives outside the repo; scripts locate it through variables in a `.env` file at
+the repo root (not tracked). Copy `.env.example` and set the paths for your machine.
+
+| Variable | Points at | Used by |
+| --- | --- | --- |
+| `NATURAL_EARTH_DIR` | Natural Earth shapefiles, per-theme subdirs (`Countries/`, `StatesProvinces/`, `Lakes/`) | `mapprep.natural_earth`, and so every project importing it; also `conferences`, `wind-turbines` |
+| `NASA_DIR` | NASA elevation data, containing `SRTM_30/` | `forest-loss` |
+| `TNM_DIR` | USGS The National Map, by state code (`OR/`, `WA/`) | `stylized-pdx` |
+| `NHD_DIR` | USGS National Hydrography Dataset, by state code | `stylized-pdx` |
+| `DATA_DIR` | Catch-all for project-specific downloads | `wind-turbines` |
+
+Projects reading only from a local `input/` directory (`cropland`, `ambient-occlusion`,
+`topo-blocks`, `ridge-maps`) need none of these. `census-poverty` calls the Census API
+without a key.
+
+Load with `dotenv.load_dotenv(dotenv.find_dotenv())`, as `mapprep/src/mapprep/natural_earth.py`
+does — it searches upward from the caller and works regardless of the directory a script is
+run from. Several older scripts hardcode `load_dotenv("../.env")`, which only resolves when
+run from inside the project directory; prefer `find_dotenv()` in new code.
+
 ## Layer Documentation
 
 Every file written to a project's `output/` directory must be documented in that project's `output/LAYERS.md` — use the `make-layer` skill, which covers the entry format, the facts-extraction script, and update semantics. `CATALOG.md` at the repo root indexes documented projects; it is the entry point for Claude sessions in the user's map-planning directory, which see only files and rely on this documentation for the reasoning and processing chain behind each layer.
@@ -45,7 +67,7 @@ The codebase primarily uses:
 - Individual project directories are self-contained with their own data and processing scripts
 - Shared functionality is extracted to the `mapprep/` package
 - Output images (.png) are tracked in git while other output files are ignored
-- Environment variables stored in `.env` (not tracked)
+- Environment variables stored in `.env` (not tracked); see Environment Variables above and `.env.example`
 
 ## Data Processing Notes
 
