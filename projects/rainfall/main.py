@@ -11,13 +11,11 @@ import dotenv
 dotenv.load_dotenv(dotenv.find_dotenv())
 
 geopackage_name = 'output/rainfall.gpkg'
-min_population = 500_000
 
-# Satellites of a larger adjacent metro (or regional label pile-ups) that clutter a CONUS-scale
-# map; the bigger neighbor's label stands in for them. Names match the NE 50m dataset exactly,
-# including its double spaces.
-excluded_places = ['St.  Paul', 'Ft.  Worth', 'San Bernardino', 'San Jose', 'Bridgeport',
-                   'Vancouver', 'Baltimore', 'Rochester', 'Syracuse']
+# City labels come from NE's curated scalerank (0 = most important) rather than a population
+# cutoff: rank <= 2 gives 20 label-worthy cities and already excludes satellite metros
+# (St. Paul, Ft. Worth, ...) that a population threshold lets through.
+max_scalerank = 2
 
 # Annual precipitation classes, in inches
 rainfall_breaks = [5, 10, 15, 20, 30, 40, 60, 80, 100]
@@ -34,7 +32,7 @@ us_states.to_file(geopackage_name, layer='us_states', driver='GPKG')
 # Dissolved contiguous-US outline, for the layout vignette effect. Derived from us_states
 # (not the NE admin-0 country polygon) so it lines up with the state linework exactly.
 us_states.dissolve()[['geometry']].to_file(geopackage_name, layer='conus_outline', driver='GPKG')
-ne.us_populated_places(min_population=min_population, contiguous=True, exclude=excluded_places).to_file(geopackage_name, layer='populated_places', driver='GPKG')
+ne.us_populated_places(max_scalerank=max_scalerank, contiguous=True).to_file(geopackage_name, layer='populated_places', driver='GPKG')
 
 # Outlines of every non-US country in the frame (Canada, Mexico, Cuba, Bahamas, Central
 # America, ...) so all foreign land styles uniformly; whole countries, not their states

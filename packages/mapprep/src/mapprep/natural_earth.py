@@ -90,10 +90,15 @@ def read_populated_places(scale : str = '50m'):
     path, _ = POPULATED_PLACES[scale]
     return gpd.read_file(ne_directory(path))
 
-def us_populated_places(scale : str = '50m', min_population : int = 0, contiguous : bool = False, exclude=None):
+def us_populated_places(scale : str = '50m', min_population : int = 0, max_scalerank : int = None,
+                        contiguous : bool = False, exclude=None):
+    """max_scalerank filters on NE's curated label-importance rank (0 = most important) —
+    unlike min_population it keeps regionally critical small places and drops big satellites."""
     _, case = POPULATED_PLACES[scale]
     places = read_populated_places(scale)
     places = places[(places[case('adm0name')] == 'United States of America') & (places[case('pop_max')] >= min_population)]
+    if max_scalerank is not None:
+        places = places[places[case('scalerank')] <= max_scalerank]
     if contiguous:
         places = places[~places[case('adm1name')].isin(NON_CONTIGUOUS)]
     if exclude is not None:
