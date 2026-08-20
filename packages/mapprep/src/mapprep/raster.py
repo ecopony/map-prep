@@ -49,6 +49,40 @@ def scale_values(src_path, dst_path, factor : float):
         dst.write(data.astype(meta['dtype']), 1)
     return dst_path
 
+def _reduce(src_paths, dst_path, reducer):
+    """Pixelwise reduction across aligned single-band rasters; nodata where any input is."""
+    stack = []
+    for path in src_paths:
+        with rasterio.open(path) as src:
+            data = src.read(1).astype(np.float64)
+            if stack and data.shape != stack[0].shape:
+                raise ValueError(f'grid mismatch: {path} is {data.shape}, expected {stack[0].shape}')
+            valid = np.isfinite(data) if src.nodata is None else data != src.nodata
+            stack.append(np.where(valid, data, np.nan))
+            meta = src.meta.copy()
+    result = reducer(np.stack(stack), axis=0)
+    meta.update(dtype='float32', nodata=-9999.0, compress='deflate')
+    with rasterio.open(dst_path, 'w', **meta) as dst:
+        dst.write(np.where(np.isfinite(result), result, -9999.0).astype('float32'), 1)
+    return dst_path
+
+def mean(src_paths, dst_path):
+    return _reduce(src_paths, dst_path, np.mean)
+
+def total(src_paths, dst_path):
+    return _reduce(src_paths, dst_path, np.sum)
+
+def difference(src_path, subtract_path, dst_path):
+    """Pixelwise src - subtract."""
+    return _reduce([src_path, subtract_path], dst_path, lambda stack, axis: stack[0] - stack[1])
+
+def ratio(numerator_path, denominator_path, dst_path):
+    """Pixelwise numerator / denominator; nodata where either input is, or denominator <= 0."""
+    def _ratio(stack, axis):
+        with np.errstate(divide='ignore', invalid='ignore'):
+            return np.where(stack[1] > 0, stack[0] / stack[1], np.nan)
+    return _reduce([numerator_path, denominator_path], dst_path, _ratio)
+
 def classify_to_polygons(raster_path, breaks, smooth_sigma : float = 0, upsample : int = 1, sieve_pixels : int = 0, simplify_tolerance : float = 0):
     """Classify a single-band raster into bins and vectorize to a polygon coverage.
 
