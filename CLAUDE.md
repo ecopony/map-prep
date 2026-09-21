@@ -80,3 +80,7 @@ The codebase primarily uses:
 - Scripts typically process geospatial raster data (elevation models, satellite imagery)
 - CSV data processing uses pandas for demographic and statistical data
 - Geographic data often involves coordinate system transformations and spatial operations
+
+## Style Library
+
+ArcGIS Pro symbology recipes live in `shared/styles/` (one markdown file per style, indexed in `shared/styles/README.md`). Use the `style` skill to save a recipe (`save "<Name>, <recipe>"`) or retrieve one (`retrieve <name> style`). Pro symbology is invisible to the repo, so these files are the only record of how layers were styled across maps.

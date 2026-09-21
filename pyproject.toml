@@ -9,6 +9,7 @@ members = [
     "projects/hillshade",
     "projects/property-rainwater",
     "projects/rainfall",
+    "projects/sky-islands",
 ]
 
 # The pinned GDAL wheel is Windows/CPython 3.12 only, so lock for that platform.
