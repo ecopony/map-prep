@@ -270,6 +270,15 @@ tint = raster.classify_to_polygons(dem_path, tint_breaks, smooth_sigma=2, upsamp
                                    sieve_pixels=200, simplify_tolerance=60)
 tint.to_crs(crs_out).to_file(geopackage_name, layer='elevation_bands', driver='GPKG')
 
+# The bands above the shoreline clipped to the islands (2026-09-20): a hypsometric step or
+# two inside the island green, so the tall ranges (Pinalenos, Chiricahuas) show a summit
+# and the foothill islands stay flat. Clipping to the unsmoothed `islands` polygons pins
+# the outer edge to the real shoreline; the inner band edges keep the smoothing. Same
+# breaks as the transect panel's zones, roughly (1,800 / 2,100 / 2,400 / 2,700).
+tint_islands = gpd.overlay(tint[tint['lower'] >= shoreline_m], islands[['island_id', 'geometry']],
+                           how='intersection', keep_geom_type=True)
+tint_islands.to_crs(crs_out).to_file(geopackage_name, layer='elevation_bands_islands', driver='GPKG')
+
 # --- Chart styling: sea vs land --------------------------------------------------------
 # The bathymetry look needs the two worlds styled separately: a flat depth ramp in the
 # "sea" (< shoreline), hillshade + contours on the "land". Splitting them
