@@ -107,7 +107,7 @@ def fetch_usgs(bounds, dst_path, dataset='USGS1m', cache_dir='cache/opentopograp
     Same key and caching pattern as fetch(), but against the /API/usgsdem endpoint.
     CAUTION: unlike globaldem, usgsdem rejects ordinary free API keys (401) — it is
     limited to academic-account keys. For keyless access to the same 1m tiles use
-    The National Map API instead (see property-rainwater/main.py fetch_tnm_dem_1m).
+    The National Map API instead.
     No slabbing: the USGS1m per-request limit (250 km^2) is far above the site scales
     this is for. The grid comes back in the source's native CRS (UTM for USGS1m), not
     geographic — warp it yourself if you need a specific CRS/resolution.

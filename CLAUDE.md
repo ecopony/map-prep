@@ -15,7 +15,7 @@ This is a map preparation repository containing standalone Python scripts for va
 
 The repo is a [uv](https://docs.astral.sh/uv/) workspace (Python 3.12, single `.venv` and `uv.lock` at the root):
 
-- The root `pyproject.toml` declares workspace members. Shared code lives in the `mapprep` package (`packages/mapprep/src/mapprep/`); converted projects (`ambient-occlusion`, `carson-rem`, `conferences`, `cropland`, `forest-loss`, `hillshade`, `property-rainwater`, `rainfall` under `projects/`) each have a `pyproject.toml` declaring their dependencies plus `mapprep = { workspace = true }`.
+- The root `pyproject.toml` declares workspace members. Shared code lives in the `mapprep` package (`packages/mapprep/src/mapprep/`); converted projects (`ambient-occlusion`, `carson-rem`, `conferences`, `cropland`, `forest-loss`, `hillshade`, `rainfall` under `projects/`) each have a `pyproject.toml` declaring their dependencies plus `mapprep = { workspace = true }`.
 - Run a project with `uv run main.py` from its directory (or `uv run --package <name> ...` from the root). Never use `sys.path` hacks; import shared code as `from mapprep import natural_earth as ne` / `from mapprep import hillshade`.
 - **GDAL**: PyPI ships no Windows wheels, so `packages/mapprep/pyproject.toml` pins a cgohlke geospatial-wheels URL (cp312/win_amd64 only — this is why `requires-python` is pinned to 3.12 and the root locks `environments = ["sys_platform == 'win32'"]`). Upgrading GDAL or Python means picking a new wheel from https://github.com/cgohlke/geospatial-wheels/releases.
 - **riverrem**: PyPI's `riverrem` is a dead 0.0.1 stub. carson-rem installs it from the OpenTopography GitHub repo and declares its undeclared runtime deps (osmnx, scipy, seaborn, cmocean, requests) explicitly.
@@ -47,6 +47,7 @@ normalized to `find_dotenv()` during the 2026-08 reorg).
 ## Layer Documentation
 
 Every file written to a project's `output/` directory must be documented in that project's `output/LAYERS.md` — use the `make-layer` skill, which covers the entry format, the facts-extraction script, and update semantics. `CATALOG.md` at the repo root indexes documented projects; it is the entry point for Claude sessions in the user's map-planning directory, which see only files and rely on this documentation for the reasoning and processing chain behind each layer.
+
 
 ## Key Dependencies
 

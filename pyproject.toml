@@ -7,7 +7,6 @@ members = [
     "projects/cropland",
     "projects/forest-loss",
     "projects/hillshade",
-    "projects/property-rainwater",
     "projects/rainfall",
     "projects/sky-islands",
 ]
