@@ -35,7 +35,7 @@ def _class_labels(breaks, fmt):
 def render(colors, out_path, *, labels=None, breaks=None, title=None, style='stacked',
            swatch_w=0.24, swatch_h=0.17, gap=0.05, fontsize=8.5, title_fontsize=10,
            font=None, ink=_INK, edge=_EDGE, number_format='{:g}', dpi=300,
-           ascending=False):
+           ascending=False, label_gaps=False):
     """Write a transparent-PNG legend and return out_path.
 
     colors: swatch fills, in data order (low to high for classed data).
@@ -47,6 +47,10 @@ def render(colors, out_path, *, labels=None, breaks=None, title=None, style='sta
         on top, the usual convention for quantity legends.
     swatch_w/swatch_h/gap: inches per swatch. 'ramp' and 'bar' ignore gap.
     number_format: applied to break values ('{:g}' drops trailing zeros).
+    label_gaps: 'blocks' with breaks only — put each break value under the gap between
+        two blocks instead of a range under each block. For signed (diverging) classes,
+        where range labels like '-40--20' are unreadable and the zero break should show.
+        Blocks keep swatch_w rather than widening to fit range labels.
     """
     if (labels is None) == (breaks is None):
         raise ValueError('provide exactly one of labels or breaks')
@@ -56,6 +60,9 @@ def render(colors, out_path, *, labels=None, breaks=None, title=None, style='sta
         raise ValueError(f'need {len(labels)} == {len(colors)} labels')
     if style not in STYLES:
         raise ValueError(f'style must be one of {STYLES}')
+    label_gaps = label_gaps and style == 'blocks'
+    if label_gaps and breaks is None:
+        raise ValueError('label_gaps needs breaks')
 
     n = len(colors)
     text_kw = {'color': ink, 'fontsize': fontsize}
@@ -81,7 +88,10 @@ def render(colors, out_path, *, labels=None, breaks=None, title=None, style='sta
 
     vertical = style in ('stacked', 'ramp')
     col = list(colors) if (ascending or not vertical) else list(colors)[::-1]
-    if style == 'blocks':
+    if label_gaps:
+        # Break values sit under the gaps; true minus signs, not hyphens
+        gap_labs = [number_format.format(b).replace('-', '−') for b in breaks]
+    elif style == 'blocks':
         # Blocks carry their label beneath them: never narrower than the label
         all_labs = labels if labels is not None else _class_labels(breaks, number_format)
         swatch_w = max([swatch_w] + [text_width(lab, **text_kw) + 0.06 for lab in all_labs])
@@ -114,7 +124,11 @@ def render(colors, out_path, *, labels=None, breaks=None, title=None, style='sta
         base_y = 0.5
         for i, c in enumerate(col):
             swatch(0.5 + i * step_w, base_y, swatch_w, swatch_h, c)
-        if style == 'blocks':
+        if label_gaps:
+            for i, lab in enumerate(gap_labs):
+                ax.text(0.5 + (i + 1) * step_w - gap / 2, base_y - 0.06, lab,
+                        va='top', ha='center', **text_kw)
+        elif style == 'blocks':
             labs = labels if labels is not None else _class_labels(breaks, number_format)
             for i, lab in enumerate(labs):
                 ax.text(0.5 + i * step_w + swatch_w / 2, base_y - 0.06, lab,
@@ -141,6 +155,54 @@ def render(colors, out_path, *, labels=None, breaks=None, title=None, style='sta
     crop = mtransforms.Bbox.from_extents(content.x0 - pad, content.y0 - pad,
                                          content.x1 + pad, content.y1 + pad)
     fig.savefig(out_path, dpi=dpi, transparent=True, bbox_inches=crop)
+    plt.close(fig)
+    return out_path
+
+
+def line_item(label, out_path, *, color=_INK, linewidth=1.0, dashes=(4.5, 2.8), length=0.53,
+              fontsize=8.5, font=None, ink=_INK, dpi=300):
+    """Write a transparent-PNG legend entry for a line: a sample stroke with its label.
+
+    Companion to render(): same ink, default label size and crop padding, so placing it
+    under a swatch legend with left edges aligned lines the stroke up with the swatches.
+
+    color/linewidth: the stroke, mirrored from the layer's symbology (linewidth in points).
+    dashes: (on, off) lengths in points, or None for a solid line.
+    length: sample length in inches (default spans two swatches and their gap); a dashed
+        sample is shortened to end on a whole dash.
+    """
+    text_kw = {'color': ink, 'fontsize': fontsize}
+    if font:
+        text_kw['fontname'] = font
+
+    if dashes:
+        # Snap the sample to whole dashes so it doesn't end on a clipped stub.
+        on, off = dashes
+        count = max(1, int((length * 72 + off) // (on + off)))
+        length = (count * on + (count - 1) * off) / 72
+
+    fig = plt.figure(figsize=(8, 2))
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.set_xlim(0, fig.get_figwidth())
+    ax.set_ylim(0, fig.get_figheight())
+    ax.set_axis_off()
+    ax.set_aspect('equal')
+
+    # Dash lengths are literal points, not multiples of the line width.
+    with plt.rc_context({'lines.scale_dashes': False}):
+        line_kw = {'dashes': dashes} if dashes else {}
+        ax.plot([0.5, 0.5 + length], [1, 1], color=color, linewidth=linewidth,
+                solid_capstyle='butt', dash_capstyle='butt', **line_kw)
+        ax.text(0.5 + length + 0.07, 1, label, va='center', ha='left', **text_kw)
+
+        renderer = fig.canvas.get_renderer()
+        to_inches = fig.dpi_scale_trans.inverted()
+        content = mtransforms.Bbox.union([a.get_window_extent(renderer) for a in ax.lines + ax.texts])
+        content = content.transformed(to_inches)
+        pad = 0.04
+        crop = mtransforms.Bbox.from_extents(content.x0 - pad, content.y0 - pad,
+                                             content.x1 + pad, content.y1 + pad)
+        fig.savefig(out_path, dpi=dpi, transparent=True, bbox_inches=crop)
     plt.close(fig)
     return out_path
 

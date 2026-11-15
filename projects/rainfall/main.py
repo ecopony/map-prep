@@ -1,12 +1,13 @@
 import os
 import pandas as pd
 import geopandas as gpd
-from shapely.geometry import LineString
+from shapely.geometry import LineString, box
 from mapprep import aridity
 from mapprep import dem
 from mapprep import earthenv
 from mapprep import hillshade
 from mapprep import legend
+from mapprep import lines
 from mapprep import natural_earth as ne
 from mapprep import prism
 from mapprep import raster
@@ -97,6 +98,13 @@ meridian_100 = gpd.GeoDataFrame(
     geometry=[LineString([(-100, map_bounds[1]), (-100, map_bounds[3])]).segmentize(0.5)], crs='EPSG:4326')
 meridian_100.to_file(geopackage_name, layer='meridian_100', driver='GPKG')
 
+# Layout variant of the meridian: pre-cut dashes that fade out beyond the US borders.
+# Pro has no along-the-line gradient, so each dash carries its own opacity; symbolize with
+# a solid stroke and drive transparency from the `transparency` field. Measured in the map
+# frame's CRS so the dashes are even on the page.
+lines.faded_dashes(meridian_100, us_states, 'EPSG:5070', fade=300_000).to_file(
+    geopackage_name, layer='meridian_100_faded', driver='GPKG')
+
 pet = aridity.hargreaves_pet_annual(prism.monthly_normals_paths('tmin'), prism.monthly_normals_paths('tmax'),
                                     'output/pet_annual_mm.tif')
 aridity_path = aridity.aridity_index(prism.ppt_annual_normals_path(), pet, 'output/aridity_index.tif')
@@ -128,12 +136,53 @@ water_balance = raster.classify_to_polygons('output/water_balance_in.tif', water
 water_balance = water_balance.clip(us_states.to_crs(water_balance.crs), keep_geom_type=True)
 water_balance.to_file(geopackage_name, layer='water_balance_classes', driver='GPKG')
 
+# The break-even line (P = PET). Built for the surplus & deficit sheet, left off it (the
+# color hinge already shows it) and kept as a candidate line for the shifting-meridian
+# map. The zero edge is not one
+# line — there are surplus islands on the Plains and a large deficit area across the
+# Southeast — so only the main one is drawn: the longest connected zero boundary east of
+# the 100th meridian, running from the Texas coast to Lake Michigan. Taken from the class
+# polygons, not the raster, so it sits exactly on the cream/teal color edge.
+zero_edges = lines.shared_boundary(water_balance[water_balance['class'] <= 4],
+                                   water_balance[water_balance['class'] >= 5], 'EPSG:5070')
+zero_edges = zero_edges[zero_edges.bounds['minx'] > -100]
+break_even = zero_edges.head(1).assign(label='Break-even')
+break_even.to_file(geopackage_name, layer='water_balance_break_even', driver='GPKG')
+
+# Layout variant: the exact edge is too ragged to read as a line, so it is averaged into
+# one smooth north-south curve (mean longitude per latitude, heavily smoothed) and cut
+# into fading dashes like meridian_100_faded. Longer dashes than the meridian's so the two
+# lines differ on the sheet. The real edge only spans the Gulf coast to Lake Michigan; the
+# curve is continued in a straight line past both ends so it is solid over the same
+# latitudes as the meridian (Rio Grande to the Canadian border) and fades out level with
+# it, which is what lets the two be read as a pair.
+break_even_smooth = lines.north_south_average(break_even, smooth=2.5, extend=9)
+meridian_in_us = meridian_100.to_crs(us_states.crs).clip(us_states).total_bounds
+# (a band around the line, segmentized so its edges stay on their parallels when projected)
+meridian_span = gpd.GeoSeries([box(-110, meridian_in_us[1], -75, meridian_in_us[3]).segmentize(0.5)],
+                              crs=us_states.crs)
+lines.faded_dashes(break_even_smooth, meridian_span, 'EPSG:5070',
+                   dash=70_000, fade=300_000).assign(label='Break-even').to_file(
+    geopackage_name, layer='water_balance_break_even_faded', driver='GPKG')
+
 # Brown-teal diverging ramp (BrBG-derived), hinge pair lightness-offset so the zero edge
 # stays legible for CVD readers (validated: worst adjacent protan dE 10.3, hinge dE 13.7).
 water_balance_colors = ['#543005', '#8c510a', '#bf812d', '#dfc27d', '#f9f0da',
                         '#7fcbbd', '#38a493', '#0d8172', '#03604f', '#003c30']
 legend.options(water_balance_colors, 'output', 'legend_water_balance', breaks=water_balance_breaks,
                title='Annual water balance (inches)', font='Kumbh Sans')
+# Blocks with the break values under the gaps instead of a range under each block: signed
+# ranges ("-40--20") are unreadable, and this form shows the zero hinge. swatch_w is the
+# rainfall blocks legend's block width, so the two legends are the same overall width.
+legend.render(water_balance_colors, 'output/legend_water_balance_blocks_breaks.png',
+              breaks=water_balance_breaks, style='blocks', label_gaps=True, swatch_w=0.443,
+              title='Annual water balance (inches)', font='Kumbh Sans')
+# Legend entry for water_balance_break_even_faded, to sit with the meridian entry. Dashes
+# are the layer's 70 km : 25 km in the meridian entry's scale (its 40 km dash = 4.5 pt);
+# darker and slightly heavier than the meridian so the two read as different lines. The
+# stroke is the recommended style — re-run if it is symbolized differently in Pro.
+legend.line_item('Break-even', 'output/legend_break_even.png', color='#323232cc',
+                 linewidth=0.8, dashes=(7.9, 2.8), length=0.6, font='Kumbh Sans')
 
 # Seasonality: JAS (North American Monsoon season) share of annual precipitation — near 0
 # on the winter-wet Pacific coast, approaching 0.5 in the monsoon Southwest. Denominator is
@@ -180,10 +229,35 @@ raster.difference('cache/climatology/aridity_index_1991-2020.tif',
 # transparent, sized in real inches). Colors mirror the rainfall_classes symbology in the
 # Pro project (first color = the <Null>/"< 5" class) — re-run if the symbology changes.
 # Four style options; only the chosen one goes on the layout.
+# 2026-11-10: the four classes from 30-40 to 80-100 were respaced (was #32e300 #0ec546
+# #1ea088 #166c8b) so the East stops reading as one wall of green; these four originate
+# here — set the Pro symbology from them.
 rainfall_colors = ['#c2523c', '#da7528', '#efaa11', '#f9dd07', '#c0f700',
-                   '#32e300', '#0ec546', '#1ea088', '#166c8b', '#0b2c7a']
+                   '#6fd41a', '#2aa83c', '#167f6c', '#165f8a', '#0b2c7a']
 legend.options(rainfall_colors, 'output', 'legend_rainfall', breaks=rainfall_breaks,
                title='Annual precipitation (inches)', font='Kumbh Sans')
+
+# Same legend treatment for rainfall_classes_cadillac (the "No Place to Inhabit at All"
+# sheet), so the twin sheets share one legend form. Colors mirror the Pro symbology
+# — re-run if the palette is revised. 2026-11-11: palette changed from the first draft's
+# #e60000 / #a87000 / #38a800 to brick red / ochre / pale sage, so the two dry classes
+# carry the color and the wet East recedes; these three originate here — set the Pro
+# symbology from them.
+cadillac_colors = ['#a8321e', '#cf9a3a', '#c9d9c3']
+legend.options(cadillac_colors, 'output', 'legend_cadillac', breaks=[7, 20],
+               title='Annual precipitation (inches)', font='Kumbh Sans')
+
+# Legend entry for meridian_100_faded, to sit under whichever class legend a sheet uses.
+# Stroke mirrors the line as it appears on the rainfall sheet — 0.7 pt, and a dark grey at
+# roughly a third opacity (estimated from a layout export, not read from the Pro symbol).
+# Re-run if the line's color, weight or transparency changes.
+legend.line_item('100th meridian', 'output/legend_meridian_100.png', color='#32323254',
+                 linewidth=0.7, font='Kumbh Sans')
+
+# Same entry for the surplus & deficit sheet, where the meridian is drawn darker and
+# heavier to hold up against the saturated brown fills (estimated from a layout export).
+legend.line_item('100th meridian', 'output/legend_meridian_100_water_balance.png',
+                 color='#1a1a1ab8', linewidth=1.0, font='Kumbh Sans')
 
 # Relief backdrops to compare: Copernicus GLO-90 hillshade vs Natural Earth manual shaded relief.
 raster.clip(ne.us_manual_shaded_relief_path(), 'output/relief_ne_msr.tif', map_bounds, dst_nodata=0)
